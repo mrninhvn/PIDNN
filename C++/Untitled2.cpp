@@ -9,6 +9,27 @@ using namespace std;
 #define WINDOW_SIZE 30
 #define DZ_TOL 1e-20
 
+#define OUT_MAX 255
+
+    int pos = 0;
+
+    // Starting weights
+    float hw[2][3] = {{-1, -1, -1},{1, 1, 1}};
+    float ow[3] = {0.03, 0.1, 0.6};
+    
+    // Initialize the Arrays to keep the current and past values
+    float y[WINDOW_SIZE+2];
+    float r[WINDOW_SIZE+2];
+    float i_y[WINDOW_SIZE+2];
+    float i_r[WINDOW_SIZE+2];
+    float u_p[WINDOW_SIZE+2];
+    float u_i[WINDOW_SIZE+2];
+    float u_d[WINDOW_SIZE+2];
+    float x_p[WINDOW_SIZE+2];
+    float x_i[WINDOW_SIZE+2];
+    float x_d[WINDOW_SIZE+2];
+    float v[WINDOW_SIZE+2];
+
 class PIDNN
 {
   public:
@@ -28,7 +49,7 @@ class PIDNN
     void learn( void ); // PIDNN Learn and Update
 
     PIDNN( float l_rate, float weight_change, float tolerance, float timestep ); // Constructor
-    ~PIDNN( void ); // Destructor
+//    ~PIDNN( void ); // Destructor
  
   private:
 
@@ -38,24 +59,20 @@ class PIDNN
     float tol; // Error Tolerance
     float ts; // Time Step
     float d_tol; // Maximum Tolerance for weight change
-    int pos = 0;
 
-    // Starting weights
-    float hw[2][3] = {{-1, -1, -1},{1, 1, 1}};
-    float ow[3] = {0.03, 0.1, 0.6};
 
     // Arrays to keep the current and past value
-    float *y;
-    float *r;
-    float *i_y;
-    float *i_r;
-    float *u_p;
-    float *u_i;
-    float *u_d;
-    float *x_p;
-    float *x_i;
-    float *x_d;
-    float *v;
+//    float *y;
+//    float *r;
+//    float *i_y;
+//    float *i_r;
+//    float *u_p;
+//    float *u_i;
+//    float *u_d;
+//    float *x_p;
+//    float *x_i;
+//    float *x_d;
+//    float *v;
 };
 
 // Member functions definitions including constructor
@@ -70,35 +87,35 @@ PIDNN::PIDNN( float l_rate, float weight_change, float tolerance, float timestep
     d_tol = max_change*log(WINDOW_SIZE+1)/n;
 
     // Initialize the Arrays to keep the current and past values
-  y = new float[WINDOW_SIZE+2];
-    r = new float[WINDOW_SIZE+2];
-    i_y = new float[WINDOW_SIZE+2];
-    i_r = new float[WINDOW_SIZE+2];
-    u_p = new float[WINDOW_SIZE+2];
-    u_i = new float[WINDOW_SIZE+2];
-    u_d = new float[WINDOW_SIZE+2];
-    x_p = new float[WINDOW_SIZE+2];
-    x_i = new float[WINDOW_SIZE+2];
-    x_d = new float[WINDOW_SIZE+2];
-    v = new float[WINDOW_SIZE+2];
+//  	y = new float[WINDOW_SIZE+2];
+//    r = new float[WINDOW_SIZE+2];
+//    i_y = new float[WINDOW_SIZE+2];
+//    i_r = new float[WINDOW_SIZE+2];
+//    u_p = new float[WINDOW_SIZE+2];
+//    u_i = new float[WINDOW_SIZE+2];
+//    u_d = new float[WINDOW_SIZE+2];
+//    x_p = new float[WINDOW_SIZE+2];
+//    x_i = new float[WINDOW_SIZE+2];
+//    x_d = new float[WINDOW_SIZE+2];
+//    v = new float[WINDOW_SIZE+2];
 
     x_i[0] = 0;
     u_d[0] = 0;
 }
 
-PIDNN::~PIDNN( void )
-{
-    // Delete the arrays
-    delete[] i_y;
-    delete[] i_r;
-    delete[] u_p;
-    delete[] u_i;
-    delete[] u_d;
-    delete[] x_p;
-    delete[] x_i;
-    delete[] x_d;
-    delete[] v;
-}
+//PIDNN::~PIDNN( void )
+//{
+//    // Delete the arrays
+//    delete[] i_y;
+//    delete[] i_r;
+//    delete[] u_p;
+//    delete[] u_i;
+//    delete[] u_d;
+//    delete[] x_p;
+//    delete[] x_i;
+//    delete[] x_d;
+//    delete[] v;
+//}
 
 float PIDNN::DivByZero( float value )
 // Avoiding Division by Zero
@@ -254,49 +271,44 @@ int main(){
   float G = 10, a = 0.1, b = 1, c = 0.1;
 
   // Neural Net Variables
-  float learning_rate = 1e-2*ts, max_change = 0.01*log(WINDOW_SIZE + 1), tolerance = 1e-20;
+  float learning_rate = 1e-2*ts, max_change = 0.8*log(WINDOW_SIZE + 1), tolerance = 1e-20;
   
-  int setpoint = 1;
+  int setpoint = 10;
 
   // Initializing Neural Net
   printf("Initializing Neural Net\n");
   PIDNN* NeuralNet = new PIDNN(learning_rate, max_change, tolerance, ts);
 
 	printf("Simulating the Neural net response\n");
-	for(int i = 1; i < 500; i++){
+	for(int i = 1; i < 5000; i++){
   	// Simulating the Neural net response
     output = NeuralNet->predict(measured, setpoint);
-//    float max = 1000000;
-//    float min = -1000;
-//    if (output > max){
-//     	output = max;
-//    }
-//    else if (output < -max){
-//     	output = -max;
-//    }
+    if (output > OUT_MAX) output = OUT_MAX;
+    if (output < -OUT_MAX) output = -OUT_MAX;
     xddot = G*(output/a) - xdot*b - measured*c;
     xdot = xdot + xddot*ts;
     measured = measured + xdot*ts;
+//    measured = measured + output/100;
 		file << setpoint << ',' << output << ',' << measured << endl;
 	}
-	for(int i = 1; i < 500; i++){
-		setpoint = 100;
-  	// Simulating the Neural net response
-    output = NeuralNet->predict(measured, setpoint);
-    xddot = G*(output/a) - xdot*b - measured*c;
-    xdot = xdot + xddot*ts;
-    measured = measured + xdot*ts;
-		file << setpoint << ',' << output << ',' << measured << endl;
-	}
-	for(int i = 1; i < 500; i++){
-		setpoint = 30;
-  	// Simulating the Neural net response
-    output = NeuralNet->predict(measured, setpoint);
-    xddot = G*(output/a) - xdot*b - measured*c;
-    xdot = xdot + xddot*ts;
-    measured = measured + xdot*ts;
-		file << setpoint << ',' << output << ',' << measured << endl;
-	}
+//	for(int i = 1; i < 50; i++){
+//		setpoint = 100;
+//  	// Simulating the Neural net response
+//    output = NeuralNet->predict(measured, setpoint);
+//    xddot = G*(output/a) - xdot*b - measured*c;
+//    xdot = xdot + xddot*ts;
+//    measured = measured + xdot*ts;
+//		file << setpoint << ',' << output << ',' << measured << endl;
+//	}
+//	for(int i = 1; i < 500; i++){
+//		setpoint = 30;
+//  	// Simulating the Neural net response
+//    output = NeuralNet->predict(measured, setpoint);
+//    xddot = G*(output/a) - xdot*b - measured*c;
+//    xdot = xdot + xddot*ts;
+//    measured = measured + xdot*ts;
+//		file << setpoint << ',' << output << ',' << measured << endl;
+//	}
 	
 file.close();
 }
